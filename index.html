@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.2, user-scalable=yes">
+    <title>老友垂钓 · 百鱼图鉴</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #0d2b33;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            touch-action: manipulation;
+        }
+        #app {
+            width: 100%;
+            max-width: 440px;
+            height: 780px;
+            background: linear-gradient(180deg, #5bb5d4 0%, #2e7f96 35%, #17505e 70%, #0d333b 100%);
+            border-radius: 28px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.7);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            touch-action: manipulation;
+        }
+
+        /* 顶栏 */
+        #header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px 8px;
+            background: rgba(0,0,0,0.35);
+            backdrop-filter: blur(4px);
+            flex-shrink: 0;
+            z-index: 10;
+            font-size: 20px;
+            color: #fef7e0;
+            flex-wrap: wrap;
+            gap: 3px;
+        }
+        #header span {
+            background: rgba(0,0,0,0.25);
+            padding: 2px 12px;
+            border-radius: 30px;
+            white-space: nowrap;
+        }
+        #header .kindness-display {
+            background: #4caf84;
+            color: white;
+            font-weight: 700;
+        }
+
+        /* 游戏区 */
+        #game-area {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+            padding: 6px 10px;
+        }
+
+        /* 鱼漂 */
+        #float-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+        #float-line {
+            width: 2px;
+            height: 36px;
+            background: rgba(200,200,200,0.2);
+        }
+        #float-body {
+            width: 34px;
+            height: 72px;
+            background: radial-gradient(ellipse at 30% 30%, #ff5e5e, #b31a1a);
+            border-radius: 17px 17px 6px 6px;
+            border: 3px solid #ffd966;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            position: relative;
+            transition: transform 0.15s;
+        }
+        #float-body::after {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 5px;
+            height: 16px;
+            background: #ffd966;
+            border-radius: 4px;
+        }
+        #float-bob {
+            width: 14px;
+            height: 14px;
+            background: #ffd966;
+            border-radius: 50%;
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 30px #ffd96688;
+        }
+
+        .float-idle { animation: idle 1.8s ease-in-out infinite; }
+        .float-tap { animation: tap 0.4s ease 2; }
+        .float-sink { animation: sink 0.3s forwards; }
+        @keyframes idle { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        @keyframes tap { 0% { transform: translateY(0); } 30% { transform: translateY(-18px); } 70% { transform: translateY(10px); } 100% { transform: translateY(0); } }
+        @keyframes sink { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(50px); opacity: 0.5; } }
+
+        #float-status {
+            font-size: 26px;
+            color: #fef7e0;
+            margin-top: 6px;
+            background: rgba(0,0,0,0.3);
+            padding: 4px 20px;
+            border-radius: 40px;
+            min-height: 44px;
+            text-align: center;
+            backdrop-filter: blur(2px);
+        }
+
+        /* 力量条 */
+        #power-wrap {
+            width: 80%;
+            max-width: 300px;
+            margin: 10px auto 6px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+        #power-bar-bg {
+            width: 100%;
+            height: 36px;
+            background: #1a3a44;
+            border-radius: 30px;
+            border: 3px solid #5a8fa0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 4px 12px rgba(0,0,0,0.5);
+        }
+        #power-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4caf84, #ffd966, #d97a6b);
+            border-radius: 30px;
+            transition: width 0.05s linear;
+        }
+        #power-marker {
+            position: absolute;
+            top: -6px;
+            width: 6px;
+            height: 48px;
+            background: #ff3333;
+            border-radius: 4px;
+            box-shadow: 0 0 20px #ff3333aa;
+            left: 70%;
+            transition: left 0.05s linear;
+        }
+        #power-label {
+            font-size: 24px;
+            color: #fef7e0;
+            margin-top: 4px;
+            background: rgba(0,0,0,0.2);
+            padding: 2px 18px;
+            border-radius: 30px;
+        }
+        #power-green {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            background: rgba(76, 175, 132, 0.25);
+            border-left: 2px solid #4caf84;
+            border-right: 2px solid #4caf84;
+            left: 60%;
+            width: 20%;
+            pointer-events: none;
+        }
+
+        /* 底部 */
+        #controls {
+            flex-shrink: 0;
+            padding: 10px 14px 18px;
+            background: rgba(0,0,0,0.35);
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 10;
+        }
+        #bait-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+        #bait-row .bait-btn {
+            flex: 1;
+            max-width: 110px;
+            padding: 8px 0;
+            border-radius: 40px;
+            border: 3px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.06);
+            color: #e8f4f8;
+            font-size: 20px;
+            font-weight: 600;
+            transition: all 0.1s;
+            touch-action: manipulation;
+            cursor: pointer;
+            min-height: 46px;
+        }
+        #bait-row .bait-btn.active {
+            border-color: #ffd966;
+            background: #ffd96633;
+            box-shadow: 0 0 20px #ffd96644;
+        }
+        #bait-row .bait-btn:active { transform: scale(0.94); }
+
+        #action-row {
+            display: flex;
+            gap: 10px;
+        }
+        #btn-cast, #btn-reel {
+            flex: 1;
+            padding: 14px 0;
+            border-radius: 60px;
+            border: none;
+            font-size: 28px;
+            font-weight: 800;
+            transition: all 0.06s linear;
+            touch-action: manipulation;
+            cursor: pointer;
+            min-height: 62px;
+            letter-spacing: 2px;
+        }
+        #btn-cast {
+            background: linear-gradient(135deg, #ffd966, #f5b82e);
+            color: #1e2e3a;
+            box-shadow: 0 6px 0 #b87c2a, 0 6px 20px rgba(0,0,0,0.3);
+        }
+        #btn-cast:active { transform: translateY(5px); box-shadow: 0 2px 0 #b87c2a; }
+        #btn-reel {
+            background: linear-gradient(135deg, #e87050, #c94a2a);
+            color: white;
+            box-shadow: 0 6px 0 #8a3320, 0 6px 20px rgba(0,0,0,0.3);
+        }
+        #btn-reel:active { transform: translateY(5px); box-shadow: 0 2px 0 #8a3320; }
+        #btn-reel:disabled, #btn-cast:disabled {
+            opacity: 0.3;
+            transform: none;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+
+        /* 底部导航 */
+        #bottom-nav {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-top: 2px;
+        }
+        #bottom-nav button {
+            padding: 4px 16px;
+            border-radius: 30px;
+            border: 2px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.05);
+            color: #d4e9f0;
+            font-size: 20px;
+            font-weight: 600;
+            touch-action: manipulation;
+            cursor: pointer;
+            min-height: 42px;
+            transition: all 0.1s;
+        }
+        #bottom-nav button:active { transform: scale(0.94); background: rgba(255,255,255,0.12); }
+        #bottom-nav button.active-nav {
+            background: #ffd96633;
+            border-color: #ffd966;
+            color: #ffd966;
+        }
+
+        /* ===== 图鉴弹窗 ===== */
+        #book-modal {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(0,16,24,0.94);
+            backdrop-filter: blur(12px);
+            z-index: 50;
+            flex-direction: column;
+            padding: 16px 14px 20px;
+            animation: fadePop 0.25s ease;
+        }
+        @keyframes fadePop { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+
+        #book-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255,255,255,0.08);
+        }
+        #book-header h2 {
+            color: #ffd966;
+            font-size: 30px;
+            margin: 0;
+            font-weight: 800;
+            letter-spacing: 2px;
+        }
+        #book-header .close-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #fef7e0;
+            font-size: 32px;
+            padding: 0 18px;
+            border-radius: 40px;
+            cursor: pointer;
+            min-height: 50px;
+            touch-action: manipulation;
+        }
+        #book-header .close-btn:active { transform: scale(0.92); }
+
+        #book-stats {
+            display: flex;
+            gap: 16px;
+            flex-shrink: 0;
+            padding: 8px 0;
+            font-size: 20px;
+            color: #cde4ec;
+            flex-wrap: wrap;
+        }
+        #book-stats span { background: rgba(0,0,0,0.2); padding: 2px 14px; border-radius: 30px; }
+        #book-stats .num { color: #ffd966; font-weight: 700; font-size: 24px; }
+
+        #book-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px 0 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            align-content: start;
+        }
+        #book-list::-webkit-scrollbar { width: 4px; }
+        #book-list::-webkit-scrollbar-thumb { background: #5a8fa0; border-radius: 10px; }
+
+        .fish-card {
+            background: rgba(0,0,0,0.25);
+            border-radius: 16px;
+            padding: 10px 12px;
+            border: 2px solid rgba(255,255,255,0.05);
+            transition: all 0.1s;
+            min-height: 70px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .fish-card.caught {
+            border-color: rgba(255, 215, 0, 0.3);
+            background: rgba(255, 215, 0, 0.06);
+        }
+        .fish-card .f-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fef7e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .fish-card .f-name .stars-sm { font-size: 16px; letter-spacing: 2px; }
+        .fish-card .f-detail {
+            font-size: 16px;
+            color: #b0d4de;
+            margin-top: 2px;
+            line-height: 1.3;
+        }
+        .fish-card .f-catch-info {
+            font-size: 14px;
+            color: #ffd966;
+            margin-top: 2px;
+        }
+        .fish-card .f-unknown {
+            color: #5a7a84;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* ===== 鱼获弹窗 ===== */
+        #catch-modal {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(0,20,30,0.92);
+            backdrop-filter: blur(10px);
+            z-index: 45;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 20px;
+            animation: fadePop 0.3s ease;
+        }
+        #catch-modal .fish-name { font-size: 48px; font-weight: 900; color: #ffd966; text-shadow: 0 4px 0 #7a5a1a; }
+        #catch-modal .fish-weight { font-size: 36px; color: #fef7e0; background: rgba(0,0,0,0.3); padding: 2px 24px; border-radius: 50px; margin: 4px 0; }
+        #catch-modal .fish-stars { font-size: 36px; letter-spacing: 6px; margin: 2px 0 6px; }
+        #catch-modal .fish-desc { font-size: 20px; color: #b0d4de; text-align: center; max-width: 90%; margin: 4px 0 8px; padding: 4px 16px; background: rgba(0,0,0,0.2); border-radius: 20px; }
+        #catch-modal .catch-btns { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; width: 100%; margin-top: 10px; }
+        #catch-modal .catch-btns button {
+            flex: 1; min-width: 90px; padding: 12px 0; border-radius: 60px; border: none;
+            font-size: 24px; font-weight: 700; box-shadow: 0 6px 0 rgba(0,0,0,0.3);
+            transition: all 0.05s; touch-action: manipulation; cursor: pointer; min-height: 56px;
+        }
+        #catch-modal .catch-btns button:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.3); }
+        .btn-keep { background: #4caf84; color: white; }
+        .btn-release { background: #d97a6b; color: white; }
+        .btn-again { background: #5a8fa0; color: white; }
+        .badge-new { background: #ff6b35; color: white; padding: 2px 18px; border-radius: 40px; font-size: 24px; font-weight: 700; animation: pulse 0.7s infinite alternate; margin-bottom: 2px; }
+        .hidden { display: none !important; }
+        @keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.05); } }
+
+        .toast {
+            position: absolute; bottom: 150px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); color: #fef7e0; font-size: 26px; font-weight: 600;
+            padding: 8px 24px; border-radius: 50px; backdrop-filter: blur(4px); z-index: 40;
+            max-width: 90%; text-align: center; border: 2px solid rgba(255,255,255,0.06);
+            animation: toastIn 0.2s ease; pointer-events: none;
+        }
+        @keyframes toastIn { 0% { opacity: 0; transform: translateX(-50%) translateY(20px); } 100% { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+        @media (max-width: 440px) {
+            #app { height: 100vh; border-radius: 0; max-width: 100%; }
+            #bait-row .bait-btn { font-size: 17px; min-height: 40px; }
+            #btn-cast, #btn-reel { font-size: 24px; min-height: 54px; }
+            #book-list { grid-template-columns: 1fr; }
+            #catch-modal .fish-name { font-size: 40px; }
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+
+    <!-- 顶栏 -->
+    <div id="header">
+        <span id="weather-display">☀️ 晴天</span>
+        <span id="bait-display">🎣 蚯蚓 × 20</span>
+        <span id="score-display">🏆 0条</span>
+        <span class="kindness-display" id="kindness-display">🌿 0</span>
+    </div>
+
+    <!-- 游戏区 -->
+    <div id="game-area">
+        <div id="float-box" class="float-idle">
+            <div id="float-line"></div>
+            <div id="float-body"><div id="float-bob"></div></div>
+        </div>
+        <div id="float-status">🎣 点击"抛竿"开始</div>
+
+        <div id="power-wrap">
+            <div id="power-bar-bg">
+                <div id="power-green"></div>
+                <div id="power-bar-fill"></div>
+                <div id="power-marker"></div>
+            </div>
+            <div id="power-label">⚡ 力量 0%</div>
+        </div>
+    </div>
+
+    <!-- 底部 -->
+    <div id="controls">
+        <div id="bait-row">
+            <button class="bait-btn active" data-bait="蚯蚓">🪱 蚯蚓</button>
+            <button class="bait-btn" data-bait="玉米">🌽 玉米</button>
+            <button class="bait-btn" data-bait="面团">🍞 面团</button>
+        </div>
+        <div id="action-row">
+            <button id="btn-cast">🎣 抛竿</button>
+            <button id="btn-reel" disabled>🎯 提竿</button>
+        </div>
+        <div id="bottom-nav">
+            <button id="nav-book" class="active-nav">📖 图鉴</button>
+            <button id="nav-reset">🔄 重置</button>
+        </div>
+    </div>
+
+    <!-- 图鉴弹窗 -->
+    <div id="book-modal">
+        <div id="book-header">
+            <h2>📖 百鱼图鉴</h2>
+            <button class="close-btn" id="book-close">✕</button>
+        </div>
+        <div id="book-stats">
+            <span>🐟 已钓 <span class="num" id="book-caught">0</span>/36</span>
+            <span>🏆 最大 <span class="num" id="book-max">0</span></span>
+            <span>🌿 善行 <span class="num" id="book-kindness">0</span></span>
+        </div>
+        <div id="book-list"></div>
+    </div>
+
+    <!-- 鱼获弹窗 -->
+    <div id="catch-modal">
+        <div id="catch-badge" class="badge-new hidden">🎉 新鱼种！</div>
+        <div class="fish-name" id="catch-name">大鲤鱼</div>
+        <div class="fish-weight" id="catch-weight">5斤2两</div>
+        <div class="fish-stars" id="catch-stars">⭐⭐⭐</div>
+        <div class="fish-desc" id="catch-desc">淡水中的大力士，喜欢在水底拱泥觅食</div>
+        <div style="font-size:20px; color:#cde4ec; margin:2px 0;" id="catch-bait">用 蚯蚓 钓获</div>
+        <div class="catch-btns">
+            <button class="btn-keep" id="catch-keep">📥 入护</button>
+            <button class="btn-release" id="catch-release">🌿 放生</button>
+            <button class="btn-again" id="catch-again">🎣 再来一杆</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        'use strict';
+
+        // ===================== 36种鱼完整库 =====================
+        const FISH_DB = [
+            // === 江河类 (12种) ===
+            { id: '鲫鱼', rarity: 1, weightMin: 0.3, weightMax: 3.0, bait: '蚯蚓', weather: '全', desc: '最常见的淡水鱼，几乎任何水域都有，肉质鲜美' },
+            { id: '鲤鱼', rarity: 2, weightMin: 1.0, weightMax: 15.0, bait: '玉米', weather: '全', desc: '淡水中的大力士，喜欢在水底拱泥觅食，上钩后挣扎猛烈' },
+            { id: '草鱼', rarity: 2, weightMin: 2.0, weightMax: 20.0, bait: '玉米', weather: '晴天', desc: '素食主义者，爱吃水草和嫩叶，体型修长，力气极大' },
+            { id: '青鱼', rarity: 3, weightMin: 5.0, weightMax: 40.0, bait: '玉米', weather: '阴天', desc: '淡水中的巨无霸，可长到上百斤，喜欢在深水区活动' },
+            { id: '鲢鱼', rarity: 2, weightMin: 2.0, weightMax: 18.0, bait: '面团', weather: '晴天', desc: '滤食性鱼类，喜欢在水面游动，嘴巴很大，好动' },
+            { id: '鳙鱼', rarity: 2, weightMin: 3.0, weightMax: 25.0, bait: '面团', weather: '阴天', desc: '俗称胖头鱼，头大身胖，喜欢在深水区缓慢游动' },
+            { id: '白条', rarity: 1, weightMin: 0.1, weightMax: 0.6, bait: '面团', weather: '全', desc: '水面上的小精灵，成群结队，反应敏捷，适合练手' },
+            { id: '翘嘴', rarity: 3, weightMin: 2.0, weightMax: 15.0, bait: '玉米', weather: '晴天', desc: '嘴巴向上翘起，凶猛肉食鱼，喜欢追逐小鱼' },
+            { id: '鳊鱼', rarity: 2, weightMin: 0.8, weightMax: 5.0, bait: '面团', weather: '全', desc: '身体扁平如盘，喜欢在水草区活动，吃饵温柔' },
+            { id: '赤眼鳟', rarity: 2, weightMin: 0.5, weightMax: 4.0, bait: '蚯蚓', weather: '全', desc: '眼睛有一圈红色，活泼好动，喜欢在流水中穿梭' },
+            { id: '黄颡', rarity: 2, weightMin: 0.3, weightMax: 2.0, bait: '蚯蚓', weather: '阴天', desc: '浑身黄绿色，嘴边有胡须，背鳍有刺，爱在水底活动' },
+            { id: '鲶鱼', rarity: 3, weightMin: 2.0, weightMax: 25.0, bait: '蚯蚓', weather: '小雨', desc: '嘴巴宽大，胡须很长，浑身粘液，喜欢在夜间觅食' },
+
+            // === 湖泊类 (12种) ===
+            { id: '罗非', rarity: 1, weightMin: 0.5, weightMax: 4.0, bait: '蚯蚓', weather: '晴天', desc: '原产非洲，适应性极强，肉厚刺少，适合清蒸' },
+            { id: '鲈鱼', rarity: 2, weightMin: 1.0, weightMax: 8.0, bait: '面团', weather: '晴天', desc: '嘴巴大，背鳍有硬刺，喜欢在水草区伏击猎物' },
+            { id: '黑鱼', rarity: 3, weightMin: 2.0, weightMax: 12.0, bait: '蚯蚓', weather: '阴天', desc: '蛇形身体，凶猛肉食鱼，护幼行为极强，生命力顽强' },
+            { id: '鳜鱼', rarity: 3, weightMin: 1.0, weightMax: 8.0, bait: '蚯蚓', weather: '阴天', desc: '身上有斑纹，嘴巴巨大，是淡水中的顶级捕食者' },
+            { id: '餐条', rarity: 1, weightMin: 0.1, weightMax: 0.4, bait: '面团', weather: '全', desc: '小体型鱼类，常在水面结群游动，是钓鱼入门的好选择' },
+            { id: '红鲌', rarity: 2, weightMin: 0.5, weightMax: 3.0, bait: '玉米', weather: '晴天', desc: '体侧银白略带红色，喜欢在水体中上层活动' },
+            { id: '黄尾', rarity: 2, weightMin: 0.3, weightMax: 2.0, bait: '面团', weather: '全', desc: '尾巴呈黄色，喜欢在浅水区觅食，拉力十足' },
+            { id: '银鲴', rarity: 2, weightMin: 0.2, weightMax: 1.5, bait: '面团', weather: '全', desc: '全身银白闪亮，喜欢在沙石底质的清澈水域活动' },
+            { id: '花鲢', rarity: 2, weightMin: 3.0, weightMax: 30.0, bait: '面团', weather: '晴天', desc: '头部大且宽，身上有黑色斑点，是大型滤食性鱼类' },
+            { id: '大白鱼', rarity: 3, weightMin: 5.0, weightMax: 35.0, bait: '玉米', weather: '晴天', desc: '银白色巨型鱼类，是湖泊中的霸主，拉力惊人' },
+            { id: '狗鱼', rarity: 3, weightMin: 2.0, weightMax: 15.0, bait: '蚯蚓', weather: '阴天', desc: '嘴巴像鸭子，牙齿锋利，是淡水中的凶猛猎手' },
+            { id: '梭鱼', rarity: 2, weightMin: 1.0, weightMax: 6.0, bait: '蚯蚓', weather: '全', desc: '身体修长如梭，游速极快，喜欢在开阔水域巡游' },
+
+            // === 溪流类 (12种) ===
+            { id: '溪石斑', rarity: 2, weightMin: 0.1, weightMax: 0.8, bait: '蚯蚓', weather: '全', desc: '身上有黑色斑纹，喜欢在清澈的溪流石缝中生活' },
+            { id: '马口鱼', rarity: 2, weightMin: 0.1, weightMax: 0.6, bait: '蚯蚓', weather: '晴天', desc: '嘴巴呈马蹄形，喜欢在急流中穿梭，肉质紧实' },
+            { id: '桃花鱼', rarity: 2, weightMin: 0.1, weightMax: 0.5, bait: '面团', weather: '晴天', desc: '体色艳丽如桃花，是溪流中最美丽的鱼类之一' },
+            { id: '宽鳍鱲', rarity: 2, weightMin: 0.1, weightMax: 0.6, bait: '蚯蚓', weather: '全', desc: '鱼鳍宽大，喜欢在清澈溪流的水面游弋' },
+            { id: '长鳍鱲', rarity: 2, weightMin: 0.1, weightMax: 0.5, bait: '面团', weather: '全', desc: '鱼鳍修长如丝带，是溪流中的优雅舞者' },
+            { id: '光唇鱼', rarity: 3, weightMin: 0.2, weightMax: 1.0, bait: '蚯蚓', weather: '阴天', desc: '嘴唇边缘有角质层，喜欢在急流中刮食石上青苔' },
+            { id: '小鳈鱼', rarity: 1, weightMin: 0.05, weightMax: 0.3, bait: '面团', weather: '全', desc: '体型最小的淡水鱼之一，成群活动，是溪流的精灵' },
+            { id: '鳑鲏', rarity: 1, weightMin: 0.05, weightMax: 0.2, bait: '面团', weather: '全', desc: '身体侧扁如菱形，色彩斑斓，是溪流中的小彩灯' },
+            { id: '麦穗鱼', rarity: 1, weightMin: 0.05, weightMax: 0.2, bait: '面团', weather: '全', desc: '体型细长如麦穗，是溪流中数量最多的小鱼' },
+            { id: '棒花鱼', rarity: 2, weightMin: 0.1, weightMax: 0.5, bait: '蚯蚓', weather: '全', desc: '身体圆胖，爱在水底沙石上翻找食物，憨态可掬' },
+            { id: '蛇鮈', rarity: 2, weightMin: 0.2, weightMax: 0.8, bait: '蚯蚓', weather: '阴天', desc: '身体细长如蛇，喜欢躲在石缝中，是溪流的隐士' },
+            { id: '银鱼', rarity: 3, weightMin: 0.05, weightMax: 0.3, bait: '面团', weather: '晴天', desc: '半透明如水晶，是溪流中最神秘的鱼类，出水即死' }
+        ];
+
+        // ===== 音效引擎 =====
+        let audioCtx = null;
+        function getAudioCtx() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            return audioCtx;
+        }
+        function playSound(type) {
+            try {
+                const ctx = getAudioCtx();
+                const now = ctx.currentTime;
+                switch(type) {
+                    case 'splash': {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(180, now);
+                        osc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+                        gain.gain.setValueAtTime(0.25, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                        osc.connect(gain); gain.connect(ctx.destination);
+                        osc.start(now); osc.stop(now + 0.2);
+                        const buf = ctx.createBuffer(1, ctx.sampleRate * 0.08, ctx.sampleRate);
+                        const d = buf.getChannelData(0);
+                        for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * Math.exp(-i/d.length*4);
+                        const n = ctx.createBufferSource();
+                        n.buffer = buf;
+                        const ng = ctx.createGain();
+                        ng.gain.setValueAtTime(0.12, now);
+                        ng.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                        n.connect(ng); ng.connect(ctx.destination);
+                        n.start(now); n.stop(now + 0.08);
+                        break;
+                    }
+                    case 'tap': {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(1200, now);
+                        osc.frequency.exponentialRampToValueAtTime(600, now + 0.08);
+                        gain.gain.setValueAtTime(0.12, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                        osc.connect(gain); gain.connect(ctx.destination);
+                        osc.start(now); osc.stop(now + 0.1);
+                        break;
+                    }
+                    case 'bite': {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(150, now);
+                        osc.frequency.exponentialRampToValueAtTime(60, now + 0.2);
+                        gain.gain.setValueAtTime(0.4, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                        osc.connect(gain); gain.connect(ctx.destination);
+                        osc.start(now); osc.stop(now + 0.25);
+                        break;
+                    }
+                    case 'success': {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(400, now);
+                        osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+                        osc.frequency.exponentialRampToValueAtTime(300, now + 0.25);
+                        gain.gain.setValueAtTime(0.2, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                        osc.connect(gain); gain.connect(ctx.destination);
+                        osc.start(now); osc.stop(now + 0.3);
+                        break;
+                    }
+                    case 'fail': {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(200, now);
+                        osc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+                        gain.gain.setValueAtTime(0.08, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                        osc.connect(gain); gain.connect(ctx.destination);
+                        osc.start(now); osc.stop(now + 0.15);
+                        break;
+                    }
+                }
+            } catch(e) {}
+        }
+
+        // ===== 状态 =====
+        const state = {
+            totalCatch: 0,
+            maxWeight: 0,
+            kindness: 0,
+            collection: {},  // { fishId: { weight: 5.2, count: 3 } }
+            baitStock: { '蚯蚓': 25, '玉米': 25, '面团': 25 },
+            weather: '晴天',
+            currentBait: '蚯蚓',
+            isFishing: false,
+            isBiting: false,
+            isPowerMode: false,
+            powerValue: 0,
+            powerDirection: 1,
+            powerTimer: null,
+            biteTimer: null,
+            phaseTimer: null,
+            currentFish: null,
+            fishWeight: 0,
+            emptyCount: 0,
+        };
+
+        // ===== DOM =====
+        const $ = id => document.getElementById(id);
+        const app = $('app');
+        const weatherDisplay = $('weather-display');
+        const baitDisplay = $('bait-display');
+        const scoreDisplay = $('score-display');
+        const kindnessDisplay = $('kindness-display');
+        const floatBox = $('float-box');
+        const floatStatus = $('float-status');
+        const powerWrap = $('power-wrap');
+        const powerFill = $('power-bar-fill');
+        const powerMarker = $('power-marker');
+        const powerLabel = $('power-label');
+        const btnCast = $('btn-cast');
+        const btnReel = $('btn-reel');
+        const baitBtns = document.querySelectorAll('.bait-btn');
+        const modal = $('catch-modal');
+        const catchBadge = $('catch-badge');
+        const catchName = $('catch-name');
+        const catchWeight = $('catch-weight');
+        const catchStars = $('catch-stars');
+        const catchDesc = $('catch-desc');
+        const catchBait = $('catch-bait');
+        const catchKeep = $('catch-keep');
+        const catchRelease = $('catch-release');
+        const catchAgain = $('catch-again');
+
+        const bookModal = $('book-modal');
+        const bookList = $('book-list');
+        const bookCaught = $('book-caught');
+        const bookMax = $('book-max');
+        const bookKindness = $('book-kindness');
+        const bookClose = $('book-close');
+        const navBook = $('nav-book');
+        const navReset = $('nav-reset');
+
+        // ===== 工具 =====
+        function rand(min, max) { return Math.random() * (max - min) + min; }
+        function randInt(min, max) { return Math.floor(rand(min, max + 0.999)); }
+        function weightStr(jin) {
+            if (jin < 0.1) return Math.round(jin * 20) + '钱';
+            if (jin < 1) return Math.round(jin * 10) + '两';
+            const whole = Math.floor(jin);
+            const dec = Math.round((jin - whole) * 10);
+            if (dec === 0) return whole + '斤';
+            return whole + '斤' + dec + '两';
+        }
+        function stars(r) { return '⭐'.repeat(r) + '☆'.repeat(3 - r); }
+
+        // ===== 存储 =====
+        function save() {
+            try {
+                localStorage.setItem('fishing_v4', JSON.stringify({
+                    totalCatch: state.totalCatch,
+                    maxWeight: state.maxWeight,
+                    kindness: state.kindness,
+                    collection: state.collection,
+                    baitStock: state.baitStock,
+                    weather: state.weather
+                }));
+            } catch(e) {}
+        }
+        function load() {
+            try {
+                const raw = localStorage.getItem('fishing_v4');
+                if (!raw) return false;
+                const d = JSON.parse(raw);
+                state.totalCatch = d.totalCatch || 0;
+                state.maxWeight = d.maxWeight || 0;
+                state.kindness = d.kindness || 0;
+                state.collection = d.collection || {};
+                state.baitStock = d.baitStock || { '蚯蚓': 25, '玉米': 25, '面团': 25 };
+                state.weather = d.weather || '晴天';
+                return true;
+            } catch(e) { return false; }
+        }
+
+        function updateUI() {
+            weatherDisplay.textContent = state.weather === '晴天' ? '☀️ 晴天' : state.weather === '阴天' ? '☁️ 阴天' : '🌧️ 小雨';
+            baitDisplay.textContent = `🎣 ${state.currentBait} × ${state.baitStock[state.currentBait] || 0}`;
+            scoreDisplay.textContent = `🏆 ${state.totalCatch}条`;
+            kindnessDisplay.textContent = `🌿 ${state.kindness}`;
+            baitBtns.forEach(b => b.classList.toggle('active', b.dataset.bait === state.currentBait));
+        }
+
+        function showToast(msg, bg = 'rgba(0,0,0,0.8)') {
+            const old = document.querySelector('.toast');
+            if (old) old.remove();
+            const div = document.createElement('div');
+            div.className = 'toast';
+            div.textContent = msg;
+            div.style.background = bg;
+            app.appendChild(div);
+            setTimeout(() => { div.style.opacity = '0'; div.style.transition = 'opacity 0.3s'; setTimeout(() => div.remove(), 400); }, 2000);
+        }
+
+        function speak(text) {
+            if (window.speechSynthesis) {
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.lang = 'zh-CN';
+                utter.rate = 0.9;
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utter);
+            }
+        }
+
+        // ===== 重置 =====
+        function resetFishing() {
+            if (state.powerTimer) { clearInterval(state.powerTimer); state.powerTimer = null; }
+            if (state.biteTimer) { clearTimeout(state.biteTimer); state.biteTimer = null; }
+            if (state.phaseTimer) { clearTimeout(state.phaseTimer); state.phaseTimer = null; }
+            state.isFishing = false;
+            state.isBiting = false;
+            state.isPowerMode = false;
+            powerWrap.style.display = 'none';
+            btnReel.disabled = true;
+            btnCast.disabled = false;
+            floatBox.className = 'float-idle';
+            floatStatus.textContent = '🎣 点击"抛竿"开始';
+        }
+
+        // ===== 选鱼 =====
+        function selectFish() {
+            let pool = FISH_DB.filter(f => {
+                const baitMatch = f.bait === state.currentBait;
+                const weatherMatch = f.weather === '全' || f.weather === state.weather;
+                return baitMatch && weatherMatch;
+            });
+            if (pool.length === 0) pool = FISH_DB;
+
+            if (state.emptyCount >= 2) {
+                const good = pool.filter(f => f.rarity >= 2);
+                if (good.length > 0) pool = good;
+                state.emptyCount = 0;
+            }
+
+            const weighted = pool.map(f => {
+                let w = f.rarity === 1 ? 3.5 : f.rarity === 2 ? 2.0 : 0.8;
+                return { fish: f, weight: w };
+            });
+            const total = weighted.reduce((s, w) => s + w.weight, 0);
+            let r = Math.random() * total;
+            for (let item of weighted) {
+                r -= item.weight;
+                if (r <= 0) return item.fish;
+            }
+            return pool[0] || FISH_DB[0];
+        }
+
+        // ===== 抛竿 =====
+        function doCast() {
+            if (state.isFishing) { showToast('⏳ 已经在钓鱼了'); return; }
+            if ((state.baitStock[state.currentBait] || 0) <= 0) {
+                showToast('😅 饵料用完了！换一种', '#d97a6b');
+                return;
+            }
+            state.baitStock[state.currentBait]--;
+            state.isFishing = true;
+            state.emptyCount = 0;
+            btnCast.disabled = true;
+            btnReel.disabled = true;
+            floatBox.className = 'float-idle';
+            floatStatus.textContent = '🎯 等待鱼儿...';
+            updateUI();
+            playSound('splash');
+            speak('咕咚');
+            startBiteSequence();
+        }
+
+        // ===== 咬钩序列 =====
+        function startBiteSequence() {
+            const fish = selectFish();
+            state.currentFish = fish;
+            state.fishWeight = rand(fish.weightMin, fish.weightMax);
+
+            const delay1 = rand(1.5, 3.5);
+            state.phaseTimer = setTimeout(() => {
+                if (!state.isFishing) return;
+                floatBox.className = 'float-tap';
+                floatStatus.textContent = `👀 鱼在试探...`;
+                playSound('tap');
+
+                state.phaseTimer = setTimeout(() => {
+                    if (!state.isFishing) return;
+                    floatBox.className = 'float-tap';
+                    floatStatus.textContent = `🐟 又来一下！`;
+                    playSound('tap');
+
+                    state.phaseTimer = setTimeout(() => {
+                        if (!state.isFishing) return;
+                        floatBox.className = 'float-sink';
+                        floatStatus.textContent = '🔥 提竿！快！';
+                        state.isBiting = true;
+                        btnReel.disabled = false;
+                        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                        playSound('bite');
+                        speak('咬钩了！');
+
+                        state.biteTimer = setTimeout(() => {
+                            if (state.isBiting) {
+                                state.isBiting = false;
+                                state.isFishing = false;
+                                btnReel.disabled = true;
+                                btnCast.disabled = false;
+                                floatBox.className = 'float-idle';
+                                floatStatus.textContent = '😅 饵被吃光了...';
+                                playSound('fail');
+                                showToast('😅 提竿慢了，饵被吃光了', '#d97a6b');
+                                state.emptyCount++;
+                                if (state.emptyCount >= 3) showToast('💪 下一杆必有鱼！', '#ffd966');
+                                setTimeout(() => { if (!state.isFishing) floatStatus.textContent = '🎣 再抛一竿吧'; }, 1000);
+                            }
+                        }, 2800);
+
+                    }, rand(0.8, 2.0) * 1000);
+
+                }, rand(1.0, 2.5) * 1000);
+
+            }, delay1 * 1000);
+        }
+
+        // ===== 提竿 → 力量条 =====
+        function doReel() {
+            if (!state.isBiting || !state.currentFish) return;
+            state.isBiting = false;
+            btnReel.disabled = true;
+            clearTimeout(state.biteTimer);
+
+            state.isPowerMode = true;
+            powerWrap.style.display = 'flex';
+            state.powerValue = rand(30, 70);
+            powerFill.style.width = state.powerValue + '%';
+            powerMarker.style.left = state.powerValue + '%';
+            powerLabel.textContent = `⚡ 力量 ${Math.round(state.powerValue)}%`;
+            floatStatus.textContent = '🎯 点击屏幕停住力量！';
+
+            state.powerDirection = 1;
+            if (state.powerTimer) clearInterval(state.powerTimer);
+            state.powerTimer = setInterval(() => {
+                let delta = state.powerDirection * 1.2;
+                state.powerValue += delta;
+                if (state.powerValue >= 100) { state.powerValue = 100; state.powerDirection = -1; }
+                if (state.powerValue <= 0) { state.powerValue = 0; state.powerDirection = 1; }
+                powerFill.style.width = state.powerValue + '%';
+                powerMarker.style.left = state.powerValue + '%';
+                powerLabel.textContent = `⚡ 力量 ${Math.round(state.powerValue)}%`;
+            }, 40);
+        }
+
+        function stopPower() {
+            if (!state.isPowerMode) return;
+            state.isPowerMode = false;
+            if (state.powerTimer) { clearInterval(state.powerTimer); state.powerTimer = null; }
+            powerWrap.style.display = 'none';
+
+            const power = state.powerValue;
+            if (power >= 58 && power <= 82) {
+                if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
+                playSound('success');
+                showCatchModal(state.currentFish, state.fishWeight);
+            } else if (power >= 40 && power <= 92) {
+                floatStatus.textContent = '😅 力量没控好，鱼跑了...';
+                playSound('fail');
+                showToast('😅 力量没控好，鱼跑了', '#d97a6b');
+                state.emptyCount++;
+                state.isFishing = false;
+                btnCast.disabled = false;
+                floatBox.className = 'float-idle';
+                setTimeout(() => { if (!state.isFishing) floatStatus.textContent = '🎣 再抛一竿吧'; }, 1000);
+            } else {
+                floatStatus.textContent = '💥 断线了！鱼跑了...';
+                playSound('fail');
+                showToast('💥 断线了！鱼跑了', '#d97a6b');
+                state.emptyCount++;
+                state.isFishing = false;
+                btnCast.disabled = false;
+                floatBox.className = 'float-idle';
+                setTimeout(() => { if (!state.isFishing) floatStatus.textContent = '🎣 再抛一竿吧'; }, 1000);
+            }
+        }
+
+        // ===== 展示鱼获 =====
+        function showCatchModal(fish, weight) {
+            catchName.textContent = fish.id;
+            catchWeight.textContent = weightStr(weight);
+            catchStars.textContent = stars(fish.rarity);
+            catchDesc.textContent = fish.desc;
+            catchBait.textContent = `用 ${state.currentBait} 钓获`;
+
+            const isNew = !state.collection[fish.id];
+            if (isNew) { catchBadge.classList.remove('hidden'); catchBadge.textContent = '🎉 新鱼种！'; }
+            else { catchBadge.classList.add('hidden'); }
+
+            modal._fishData = { fish, weight, isNew };
+            modal.style.display = 'flex';
+            floatStatus.textContent = '🎣 收获！';
+            state.isFishing = false;
+            btnCast.disabled = false;
+
+            speak(`${fish.id}，${weightStr(weight)}`);
+            // 若为新鱼种，额外语音
+            if (isNew) speak('新鱼种！');
+        }
+
+        // ===== 入护 =====
+        function handleKeep() {
+            const data = modal._fishData;
+            if (!data) return;
+            const { fish, weight, isNew } = data;
+
+            if (!state.collection[fish.id]) {
+                state.collection[fish.id] = { weight: weight, count: 0 };
+            }
+            state.collection[fish.id].count++;
+            if (weight > state.collection[fish.id].weight) {
+                state.collection[fish.id].weight = weight;
+            }
+
+            state.totalCatch++;
+            if (weight > state.maxWeight) {
+                state.maxWeight = weight;
+                showToast(`🏆 新纪录！${weightStr(weight)}`, '#ffd966');
+            }
+
+            state.emptyCount = 0;
+            save();
+            updateUI();
+            modal.style.display = 'none';
+            floatBox.className = 'float-idle';
+            floatStatus.textContent = '🎣 再抛一竿吧';
+            showToast(`✅ ${fish.id} 已入护！`, '#4caf84');
+        }
+
+        // ===== 放生 =====
+        function handleRelease() {
+            const data = modal._fishData;
+            if (!data) return;
+            const { fish } = data;
+
+            state.kindness += 5;
+            state.emptyCount = 0;
+            save();
+            updateUI();
+            modal.style.display = 'none';
+            floatBox.className = 'float-idle';
+            floatStatus.textContent = '🎣 再抛一竿吧';
+            showToast(`🌿 放生 ${fish.id}，善行+5`, '#d97a6b');
+            speak('放生积德');
+        }
+
+        function handleAgain() {
+            modal.style.display = 'none';
+            floatBox.className = 'float-idle';
+            floatStatus.textContent = '🎣 再抛一竿吧';
+            state.isFishing = false;
+            btnCast.disabled = false;
+        }
+
+        // ===== 图鉴 =====
+        function renderBook() {
+            let caught = 0;
+            let maxW = state.maxWeight;
+            let html = '';
+            for (const fish of FISH_DB) {
+                const data = state.collection[fish.id];
+                const isCaught = !!data;
+                if (isCaught) caught++;
+                const maxWStr = isCaught ? weightStr(data.weight) : '--';
+                const count = isCaught ? data.count : 0;
+
+                html += `
+                    <div class="fish-card ${isCaught ? 'caught' : ''}">
+                        <div class="f-name">
+                            <span>${isCaught ? '🐟' : '❓'} ${fish.id}</span>
+                            <span class="stars-sm">${stars(fish.rarity)}</span>
+                        </div>
+                        <div class="f-detail">${isCaught ? fish.desc : '尚未钓获'}</div>
+                        <div class="f-catch-info">${isCaught ? `最大 ${maxWStr}  ·  ${count}条` : '🔒 未解锁'}</div>
+                    </div>
+                `;
+            }
+            bookList.innerHTML = html;
+            bookCaught.textContent = caught;
+            bookMax.textContent = maxW ? weightStr(maxW) : '0';
+            bookKindness.textContent = state.kindness;
+        }
+
+        function openBook() {
+            renderBook();
+            bookModal.style.display = 'flex';
+        }
+
+        function closeBook() {
+            bookModal.style.display = 'none';
+        }
+
+        // ===== 重置游戏 =====
+        function resetGame() {
+            if (!confirm('确定要重置所有数据吗？')) return;
+            localStorage.removeItem('fishing_v4');
+            state.totalCatch = 0;
+            state.maxWeight = 0;
+            state.kindness = 0;
+            state.collection = {};
+            state.baitStock = { '蚯蚓': 25, '玉米': 25, '面团': 25 };
+            state.weather = '晴天';
+            updateUI();
+            resetFishing();
+            showToast('🔄 已重置，重新开始！', '#5a8fa0');
+        }
+
+        // ===== 切换饵料 =====
+        function selectBait(bait) {
+            if (state.isFishing) { showToast('⏳ 正在钓鱼，不能换饵'); return; }
+            state.currentBait = bait;
+            updateUI();
+            showToast(`🔄 换成 ${bait}`, '#5a8fa0');
+        }
+
+        // ===== 事件绑定 =====
+        btnCast.addEventListener('click', doCast);
+        btnReel.addEventListener('click', doReel);
+
+        document.getElementById('game-area').addEventListener('click', function(e) {
+            if (state.isPowerMode) { e.stopPropagation(); stopPower(); }
+        });
+
+        baitBtns.forEach(btn => {
+            btn.addEventListener('click', function() { selectBait(this.dataset.bait); });
+        });
+
+        catchKeep.addEventListener('click', handleKeep);
+        catchRelease.addEventListener('click', handleRelease);
+        catchAgain.addEventListener('click', handleAgain);
+
+        navBook.addEventListener('click', openBook);
+        bookClose.addEventListener('click', closeBook);
+        navReset.addEventListener('click', resetGame);
+
+        // 键盘: C抛竿, 空格/R提竿/停力量, B图鉴
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'c' || e.key === 'C') { e.preventDefault(); doCast(); }
+            if (e.key === ' ' || e.key === 'r' || e.key === 'R') {
+                e.preventDefault();
+                if (state.isPowerMode) stopPower();
+                else if (!btnReel.disabled) doReel();
+            }
+            if (e.key === 'b' || e.key === 'B') { e.preventDefault(); openBook(); }
+            if (e.key === 'Escape') { closeBook(); }
+        });
+
+        // ===== 初始化 =====
+        load();
+        const weathers = ['晴天', '阴天', '小雨'];
+        state.weather = weathers[randInt(0, 2)];
+        for (let k in state.baitStock) { if (state.baitStock[k] < 5) state.baitStock[k] = 15; }
+        updateUI();
+        save();
+
+        console.log('🎣 老友垂钓·百鱼图鉴版 loaded! C=抛竿, 空格/R=提竿, B=图鉴');
+    })();
+</script>
+</body>
+</html>
